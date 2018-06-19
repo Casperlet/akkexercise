@@ -1,7 +1,7 @@
 package github.casperlet.akkaexercise
 
 import akka.actor.Status.Failure
-import akka.actor.{Actor, Status}
+import akka.actor.{Actor, ActorSystem, Props, Status}
 import akka.event.Logging
 import github.casperlet.akkaexercise.messages.{GetRequest, KeyNotFoundException, SetRequest}
 
@@ -16,6 +16,7 @@ class AkkademyDb extends Actor {
       map.put(key, value)
       log.info(s"received SetRequest - key:{$key} value:{$value}")
       sender() ! Status.Success
+
     case GetRequest(key) =>
       log.info(s"received get request - key:{$key}")
       val response = map.get(key)
@@ -23,7 +24,15 @@ class AkkademyDb extends Actor {
         case Some(x) => sender() ! x
         case None => sender() ! Failure(KeyNotFoundException(key))
       }
+
     case o => log.info(s"received unknown messages: {$o}")
       sender() ! Failure(new ClassNotFoundException)
+  }
+}
+
+object AkkademyDb {
+  def main(args: Array[String]): Unit = {
+    val system = ActorSystem("akkademy")
+    system.actorOf(Props[AkkademyDb], name = "akkademy-db")
   }
 }
